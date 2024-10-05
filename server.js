@@ -1,59 +1,121 @@
-const express=require('express')
-const mongoose=require('mongoose')
-const cors=require('cors')
-const app=express()
-const User=require('./src/Models/streamModel')
-app.use(cors())
-app.use(express.json())
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const app = express();
+const User = require("./src/Models/streamModel");
 
-mongoose.connect("mongodb+srv://rajeshtanni2001:njfCVdf70ODK7j57@rajesh.7pfdg.mongodb.net/Stream").then(()=>{
-    console.log("connected to database")
-})
+app.use(cors());
+app.use(express.json());
 
+// Connect to MongoDB
+mongoose
+  .connect(
+    "mongodb+srv://rajeshtanni2001:njfCVdf70ODK7j57@rajesh.7pfdg.mongodb.net/Stream"
+  )
+  .then(() => {
+    console.log("Connected to database");
+  })
+  .catch((err) => {
+    console.error("Database connection error:", err);
+  });
 
-app.post("/api/streamora/user",async(req,res)=>{
-   const user=await User.create(req.body)
-   res.status(200).json({
-    status:'success',
-    data:{
-        user
-    }
-   })
-})
+// Create a new user
+app.post("/api/streamora/user", async (req, res) => {
+  try {
+    const user = await User.create(req.body);
+    res.status(201).json({
+      status: "success",
+      data: {
+        user,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "fail",
+      message: error.message,
+    });
+  }
+});
 
-app.get("/api/streamora/user",async(req,res)=>{
-    const users=await User.find()
+// Get all users
+app.get("/api/streamora/user", async (req, res) => {
+  try {
+    const users = await User.find();
     res.status(200).json({
-        status:'success',
-        data:{
-            users
-        }
-       })
+      status: "success",
+      data: {
+        users,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "fail",
+      message: error.message,
+    });
+  }
+});
 
-})
-
-app.delete("/api/streamora/user/:id",async(req,res)=>{
-    console.log(req.params)
-    await User.findByIdAndDelete(req.params.id)
+// Delete a user by ID
+app.delete("/api/streamora/user/:id", async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
     res.status(204).json({
-        status:"success",
-        data:null
-    })
-})
+      status: "success",
+      data: null,
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "fail",
+      message: error.message,
+    });
+  }
+});
 
-app.patch("/api/streamora/user/:id",async(req,res)=>{
-    const user = await User.findByIdAndUpdate(
-    req.params.id , 
-        req.body ,
-        {new:true}        
-          
-      );
+// Update a user by ID (PATCH)
+app.patch("/api/streamora/user/:id", async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
     res.status(200).json({
-        status:"success",
-        user
-    })
-})
+      status: "success",
+      user,
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "fail",
+      message: error.message,
+    });
+  }
+});
 
-app.listen(4000,()=>{
-    console.log("server has started")
-})
+// Update a user by ID (PUT)
+app.put("/api/streamora/user/:id", async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true } // runValidators ensures validation checks
+    );
+    if (!user) {
+      return res.status(404).json({
+        status: "fail",
+        message: "User not found",
+      });
+    }
+    res.status(200).json({
+      status: "success",
+      user,
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "fail",
+      message: error.message,
+    });
+  }
+});
+
+// Start the server
+app.listen(4000, () => {
+  console.log("Server has started on port 4000");
+});
