@@ -4,7 +4,11 @@ const cors = require("cors");
 const app = express();
 const User = require("./src/Models/streamModel");
 
-app.use(cors());
+app.use(cors({
+  origin: "*", // Allows all origins (for testing only; be careful in production)
+  methods: "GET,POST,PUT,PATCH,DELETE"
+}));
+
 app.use(express.json());
 
 // Connect to MongoDB
