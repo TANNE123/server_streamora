@@ -4,18 +4,25 @@ const cors = require("cors");
 const app = express();
 const User = require("./src/Models/streamModel");
 
+// CORS configuration
 app.use(cors({
-  origin: "*", // Allows all origins (for testing only; be careful in production)
-  methods: "GET,POST,PUT,PATCH,DELETE"
+  origin: "*", // Allows all origins (for testing; specify origins in production)
+  methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+  allowedHeaders: "Content-Type,Authorization"
 }));
 
+// Parse incoming JSON requests
 app.use(express.json());
+
+// Handle preflight (OPTIONS) requests
+app.options("*", cors());
 
 // Connect to MongoDB
 mongoose
-  .connect(
-    "mongodb+srv://rajeshtanni2001:njfCVdf70ODK7j57@rajesh.7pfdg.mongodb.net/Stream"
-  )
+  .connect("mongodb+srv://rajeshtanni2001:njfCVdf70ODK7j57@rajesh.7pfdg.mongodb.net/Stream", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
   .then(() => {
     console.log("Connected to database");
   })
@@ -80,10 +87,17 @@ app.patch("/api/streamora/user/:id", async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
+      runValidators: true // Ensures that the updates meet schema requirements
     });
+    if (!user) {
+      return res.status(404).json({
+        status: "fail",
+        message: "User not found",
+      });
+    }
     res.status(200).json({
       status: "success",
-      user,
+      data: { user },
     });
   } catch (error) {
     res.status(400).json({
@@ -96,11 +110,10 @@ app.patch("/api/streamora/user/:id", async (req, res) => {
 // Update a user by ID (PUT)
 app.put("/api/streamora/user/:id", async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true } // runValidators ensures validation checks
-    );
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    });
     if (!user) {
       return res.status(404).json({
         status: "fail",
@@ -109,7 +122,7 @@ app.put("/api/streamora/user/:id", async (req, res) => {
     }
     res.status(200).json({
       status: "success",
-      user,
+      data: { user },
     });
   } catch (error) {
     res.status(400).json({
